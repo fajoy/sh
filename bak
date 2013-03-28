@@ -1,0 +1,36 @@
+#!/bin/sh
+now=`date "+%Y%m%d%H%M%S"`
+last_file(){
+   echo -n `find $1.??????????????.bak -maxdepth 0 -type f  2>/dev/null  |sort -r |head -n1`
+}
+last_dir(){
+   echo -n `find $1.??????????????.bak -maxdepth 0  -type d 2>/dev/null  |sort -r |head -n1`
+}
+bak_file(){
+    local f=`readlink -f $1`
+    local lf=""
+        if [ -e "${f}" ] ;then
+            echo "[FindBak] ${f}"
+            if [ -d "$f" ] ;then
+                lf=`last_dir ${f}`
+            else
+                lf=`last_file ${f}`
+            fi
+
+            if [ -e "${lf}" ] ; then
+                echo "[OldBak]   ${lf}"
+                if [ -z "`diff -rq ${f} ${lf}`"  ] ;then
+                    echo "[HasSame] ${f} = ${lf}"
+                    return
+                fi
+            fi
+            echo "[Backup]  ${f} => ${f}.${now}.bak"
+            cp -r ${f} ${f}.${now}.bak
+                else
+            echo "[NotFound]    ${f}"
+        fi
+}
+for f in "$@";
+do
+bak_file ${f}
+done
